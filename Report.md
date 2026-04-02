@@ -219,9 +219,7 @@ This step represents the final stage of a simple insertion. More complex scenari
 
 ### If full → balance() triggered
 #### **Step 10: Overflow Detection and Split Trigger**
-
 During the insertion process, after attempting to place a cell into a B-tree page, SQLite checks whether the page has exceeded its storage capacity.
-
 **Code Condition**
 
 ```c
@@ -230,183 +228,115 @@ if( pPage->nOverflow ){
 }
 ```
 
----
-
 ### **Purpose and Functionality**
-
 * **Detection of Page Overflow**:
   The variable `pPage->nOverflow` indicates that one or more cells could not be accommodated within the available space of the page.
-
 * **Triggering Rebalancing**:
   When overflow is detected, SQLite invokes the **`balance()`** function to resolve the space constraint.
 
----
-
 ### **Significance**
-
 * **Indication of Full Page**:
   This condition signifies that the current page is full and cannot accommodate additional records.
-
 * **Initiation of Structural Changes**:
   Instead of failing the insertion, SQLite dynamically reorganizes the B-tree structure to make space, ensuring continued efficient operation.
-
----
 
 ## **Step 11: Page Balancing and Split Execution (`balance()`)**
 
 The function **`balance()`** is the core mechanism responsible for maintaining the structural integrity of the B-tree during insertions that cause overflow.
 
----
 
 ### **High-Level Responsibilities**
-
 * Redistributes cells across one or more pages
 * Splits pages when necessary
 * Updates parent nodes to reflect structural changes
 
----
-
 ### **Internal Variants of Balancing**
 
 #### **1. `balance_quick()` (Optimized Case)**
-
 * **Usage Condition**:
   Invoked when insertion occurs at the **rightmost edge** of the B-tree.
-
 * **Behavior**:
   Instead of performing a full redistribution, SQLite:
-
   * Allocates a new page
   * Moves the overflowing cell directly into the new page
-
 * **Advantage**:
   Minimizes computational overhead by avoiding full-page rebalancing.
 
----
-
 #### **2. `balance_nonroot()` (General Case)**
-
 * **Usage Condition**:
   Applied when the overflow occurs in a **non-root page**, which is the most common scenario.
-
 * **Behavior**:
-
   * Considers the current page along with its sibling pages
   * Collects all cells from these pages
   * Redistributes them evenly across available pages
-
 * **Outcome**:
   Ensures balanced space utilization and maintains optimal B-tree structure.
 
----
-
 #### **3. `balance_deeper()` (Root Split Case)**
-
 * **Usage Condition**:
   Triggered when the **root page** itself overflows.
-
 * **Behavior**:
-
   * Creates a new root node
   * Splits the existing root into child pages
   * Increases the height of the B-tree
-
 * **Significance**:
   This is the only scenario in which the B-tree grows in height.
-
----
 
 ## **Step 12: Cell Redistribution**
 
 Within the balancing process, SQLite performs redistribution of cells across pages.
 
----
-
 ### **Key Operations**
-
 * **Collection of Cells**:
   All relevant cells from the current page and its siblings are gathered into temporary structures (e.g., arrays such as `b.apCell[]`).
-
 * **Even Redistribution**:
   The collected cells are redistributed across pages in a way that:
-
   * Maintains sorted order
   * Balances space utilization
   * Minimizes fragmentation
-
----
-
 ### **Significance**
-
 * **Core Split Logic**:
   This step represents the actual implementation of the page split.
-
 * **Structural Optimization**:
   Proper redistribution ensures that no page remains overly full or underutilized, preserving B-tree efficiency.
-
----
 
 ## **Step 13: Page Reconstruction (`rebuildPage()`)**
 
 After redistribution, each affected page is reconstructed to reflect the new layout.
 
----
-
 ### **Key Function**
-
 * **`rebuildPage()`**
 
----
-
 ### **Purpose and Functionality**
-
 * **Rebuilding Page Structure**:
   The function reconstructs each page by:
-
   * Writing the page header
   * Rebuilding the cell pointer array
   * Organizing the cell content area
-
 * **Ensuring Consistency**:
   It ensures that all structural components of the page are correctly aligned and updated after redistribution.
 
----
-
 ### **Significance**
-
 * **Maintains Page Integrity**:
   Guarantees that the page remains in a valid format for future operations.
-
 * **Prepares for Persistent Storage**:
   The reconstructed page is now ready for eventual writing to disk.
-
----
 
 ## **Step 14: Parent Node Update**
 
 Following page splitting and reconstruction, SQLite updates the parent node to reflect the changes in the B-tree structure.
 
----
-
 ### **Purpose and Functionality**
-
 * **Insertion of Divider Key**:
   A separator (divider key) is inserted into the parent node to distinguish between the newly formed child pages.
-
 * **Updating Child Pointers**:
   The parent node’s pointers are updated to reference the correct child pages resulting from the split.
 
----
-
 ### **Significance**
-
 * **Maintaining Tree Connectivity**:
   Ensures that navigation from parent to child nodes remains correct.
-
 * **Preserving B-tree Properties**:
   The hierarchical structure and ordering guarantees of the B-tree are maintained.
-
----
 
 ## **Overall Outcome**
 
@@ -416,7 +346,6 @@ These steps collectively handle scenarios where a simple insertion is not possib
 * Data is stored efficiently
 * Performance of search and insert operations is preserved
 
-
 ### Pager writes pages to disk safely
 ## **Step 15: Final State and Persistence**
 
@@ -425,13 +354,10 @@ After the completion of the balancing process, the insertion operation reaches i
 ### **Outcome**
 * **B-Tree Integrity Maintained**:
   The tree structure is fully balanced and satisfies all B-tree properties.
-
 * **Cursor State Reset**:
   The cursor is repositioned appropriately, ensuring consistency for subsequent operations.
-
 * **Insertion Completion**:
   The new record is successfully integrated into the database structure.
-
 * **Persistent Storage via Pager**:
   The pager subsystem ensures that all modified pages are safely written to disk, maintaining durability and consistency of the database.
 
