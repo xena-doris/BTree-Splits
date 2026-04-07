@@ -164,7 +164,7 @@ SQLite ensures:
 * Ensures reliability even during crashes
 
 
-# 🔥 Summary Table
+# Summary Table
 
 | Concept            | Where Used in SQLite      | Key Benefit          |
 | ------------------ | ------------------------- | -------------------- |
